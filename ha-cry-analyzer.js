@@ -1,106 +1,13 @@
 class HaCryAnalyzer extends HTMLElement {
-  static get _translations() {
-    return {
-      en: {
-        babyCryAnalyzer: 'Baby Cry Analyzer',
-        log: 'Log',
-        analysis: 'Analysis',
-        insights: 'Insights',
-        cryEpisodes: 'Cry Episodes',
-        cancelBtn: 'Cancel',
-        logCryBtn: '+ Log Cry',
-        logCryEpisode: 'Log a Cry Episode',
-        category: 'Category',
-        intensity: 'Intensity (1-5)',
-        duration: 'Duration (min)',
-        notes: 'Notes',
-        anyObservations: 'Any observations...',
-        saveEntry: 'Save Entry',
-        noCryLogs: 'No cry logs yet. Start tracking to build a pattern analysis.',
-        entrytime: 'Time',
-        delete: 'Delete',
-        patternAnalysis: 'Pattern Analysis',
-        totalCries: 'Total Cries',
-        avgDuration: 'Avg Duration (min)',
-        criesByHour: 'Cries by Hour of Day',
-        cryCategories: 'Cry Categories',
-        insightsTips: 'Insights & Tips',
-        startLogging: 'Start logging cry episodes to see personalized tips',
-        witchingHour: 'Most cries happen in evening (5-8 PM) - this may be the \'witching hour\'. Consider extra soothing time.',
-        nightPeaks: 'Peak crying times are at night. Review sleep patterns and feeding schedule.',
-        hungerTip: 'Hunger is the most common cry. Consider more frequent feeding sessions.',
-        fatigueTip: 'Fatigue causes most cries. Review sleep duration and nap times.',
-        painTip: 'Pain-related cries detected. Monitor for signs of discomfort or illness.',
-        longDuration: 'Average cry duration is long. Try different soothing techniques.',
-        variedPatterns: 'Varied cry patterns detected. Continue regular monitoring.',
-        hungry: 'hungry',
-        tired: 'tired',
-        pain: 'pain',
-        discomfort: 'discomfort',
-        bored: 'bored',
-        unknown: 'unknown',
-        noData: 'No data yet',
-        exportJson: 'Export to JSON',
-      },
-      pl: {
-        babyCryAnalyzer: 'Analizator Płaczu Dziecka',
-        log: 'Dziennik',
-        analysis: 'Analiza',
-        insights: 'Wgląd',
-        cryEpisodes: 'Epizody Płaczu',
-        cancelBtn: 'Anuluj',
-        logCryBtn: '+ Zaloguj Płacz',
-        logCryEpisode: 'Zaloguj Epizod Płaczu',
-        category: 'Kategoria',
-        intensity: 'Intensywność (1-5)',
-        duration: 'Czas Trwania (min)',
-        notes: 'Notatki',
-        anyObservations: 'Dowolne obserwacje...',
-        saveEntry: 'Zapisz Wpis',
-        noCryLogs: 'Brak dzienników płaczu. Zacznij śledzić, aby zbudować analizę wzorów.',
-        entrytime: 'Czas',
-        delete: 'Usuń',
-        patternAnalysis: 'Analiza Wzorów',
-        totalCries: 'Całkowite Płacze',
-        avgDuration: 'Średni Czas Trwania (min)',
-        criesByHour: 'Płacze Wg Godziny Dnia',
-        cryCategories: 'Kategorie Płaczu',
-        insightsTips: 'Wgląd i Porady',
-        startLogging: 'Zacznij rejestrować epizody płaczu, aby zobaczyć spersonalizowane porady',
-        witchingHour: 'Większość płaczów występuje wieczorem (17:00-20:00) - może to być "godzina czarów". Rozważ dodatkowy czas uspokajający.',
-        nightPeaks: 'Szczyty płaczu są w nocy. Przejrzyj wzorce snu i harmonogram karmienia.',
-        hungerTip: 'Głód jest najczęstszym płaczem. Rozważ częstsze sesje karmienia.',
-        fatigueTip: 'Zmęczenie powoduje większość płaczów. Przejrzyj czas snu i drzemki.',
-        painTip: 'Płacze związane z bólem wykryte. Monitoruj objawy dyskomfortu lub choroby.',
-        longDuration: 'Średni czas trwania płaczu jest długi. Spróbuj innych technik uspokajających.',
-        variedPatterns: 'Wykryto zróżnicowane wzorce płaczu. Kontynuuj regularny monitoring.',
-        hungry: 'głodne',
-        tired: 'zmęczone',
-        pain: 'ból',
-        discomfort: 'dyskomfort',
-        bored: 'nudne',
-        unknown: 'nieznane',
-        noData: 'Brak danych',
-        exportJson: 'Eksportuj do JSON',
-      }
-    };
-  }
-
-  _t(key) {
-    const lang = this.hassObj?.language || 'en';
-    const T = HaCryAnalyzer._translations;
-    return (T[lang] || T['en'])[key] || T['en'][key] || key;
-  }
-
   setConfig(config) {
     this.config = config;
-    this.title = config.title || this._t('babyCryAnalyzer');
+    this.title = config.title || "Baby Cry Analyzer";
     this.soundSensor = config.sound_sensor;
   }
 
   set hass(hass) {
     this.hassObj = hass;
-    if (this.shadowRoot && !this.hasUpdated) {
+    if (!this.hasUpdated) {
       this.render();
       this.hasUpdated = true;
     }
@@ -119,14 +26,6 @@ class HaCryAnalyzer extends HTMLElement {
       notes: ""
     };
     this.hasUpdated = false;
-    this.hassObj = null;
-  }
-
-  connectedCallback() {
-    if (this.hassObj && !this.hasUpdated) {
-      this.render();
-      this.hasUpdated = true;
-    }
   }
 
   getCategories() {
@@ -205,7 +104,7 @@ class HaCryAnalyzer extends HTMLElement {
     const tips = [];
 
     if (analysis.totalCries === 0) {
-      return [this._t('startLogging')];
+      return ["Start logging cry episodes to see personalized tips"];
     }
 
     // Peak hour analysis
@@ -219,30 +118,30 @@ class HaCryAnalyzer extends HTMLElement {
     });
 
     if (peakHour >= 17 && peakHour <= 20) {
-      tips.push(this._t('witchingHour'));
+      tips.push("🌆 Most cries happen in evening (5-8 PM) - this may be the 'witching hour'. Consider extra soothing time.");
     } else if (peakHour >= 21 || peakHour < 6) {
-      tips.push(this._t('nightPeaks'));
+      tips.push("🌙 Peak crying times are at night. Review sleep patterns and feeding schedule.");
     }
 
     // Category analysis
     if (analysis.topCategories.length > 0) {
       const topCategory = analysis.topCategories[0][0];
       if (topCategory === "hungry") {
-        tips.push(this._t('hungerTip'));
+        tips.push("🍼 Hunger is the most common cry. Consider more frequent feeding sessions.");
       } else if (topCategory === "tired") {
-        tips.push(this._t('fatigueTip'));
+        tips.push("😴 Fatigue causes most cries. Review sleep duration and nap times.");
       } else if (topCategory === "pain") {
-        tips.push(this._t('painTip'));
+        tips.push("⚠️ Pain-related cries detected. Monitor for signs of discomfort or illness.");
       }
     }
 
     // Duration analysis
     if (analysis.avgDuration > 15) {
-      tips.push(this._t('longDuration'));
+      tips.push("⏱️ Average cry duration is long. Try different soothing techniques.");
     }
 
     if (tips.length === 0) {
-        tips.push(this._t('variedPatterns'));
+      tips.push("✓ Varied cry patterns detected. Continue regular monitoring.");
     }
 
     return tips;
@@ -274,11 +173,11 @@ class HaCryAnalyzer extends HTMLElement {
 
     const total = analysis.topCategories.reduce((sum, [_, count]) => sum + count, 0);
     const colors = {
-      hungry: "#03a9f4",
+      hungry: "#FFB6C1",
       tired: "#B0E0E6",
-      pain: "#ff9800",
-      discomfort: "#ffeb3b",
-      bored: "#9c27b0",
+      pain: "#FFB6B6",
+      discomfort: "#F0E68C",
+      bored: "#DDA0DD",
       unknown: "#D3D3D3"
     };
 
@@ -305,18 +204,18 @@ class HaCryAnalyzer extends HTMLElement {
     return `
       <div class="tab-content">
         <div class="log-header">
-          <h3>${this._t('cryEpisodes')} (${this.cryLog.length})</h3>
-          <button class="btn btn-primary" data-action="toggleAddForm">
-            ${this.showAddForm ? this._t('cancelBtn') : this._t('logCryBtn')}
+          <h3>Cry Episodes (${this.cryLog.length})</h3>
+          <button class="btn btn-primary" @click="${() => { this.showAddForm = !this.showAddForm; this.render(); }}">
+            ${this.showAddForm ? "Cancel" : "+ Log Cry"}
           </button>
         </div>
 
         ${this.showAddForm ? `
           <div class="form-card">
-            <h4>${this._t('logCryEpisode')}</h4>
+            <h4>Log a Cry Episode</h4>
             <div class="form-group">
-              <label>${this._t('category')}</label>
-              <select class="form-select" data-field="category">
+              <label>Category</label>
+              <select class="form-select" @change="${(e) => { this.formData.category = e.target.value; }}">
                 ${this.getCategories().map(cat =>
                   `<option value="${cat}" ${this.formData.category === cat ? "selected" : ""}>${cat}</option>`
                 ).join("")}
@@ -324,38 +223,41 @@ class HaCryAnalyzer extends HTMLElement {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>${this._t('intensity')}</label>
-                <input type="range" min="1" max="5" class="form-range" data-field="intensity"
-                  value="${this.formData.intensity}">
+                <label>Intensity (1-5)</label>
+                <input type="range" min="1" max="5" class="form-range"
+                  value="${this.formData.intensity}"
+                  @change="${(e) => { this.formData.intensity = e.target.value; this.render(); }}">
                 <span class="intensity-display">${this.formData.intensity}</span>
               </div>
               <div class="form-group">
-                <label>${this._t('duration')}</label>
-                <input type="number" min="1" max="60" class="form-input" data-field="duration"
-                  value="${this.formData.duration}">
+                <label>Duration (min)</label>
+                <input type="number" min="1" max="60" class="form-input"
+                  value="${this.formData.duration}"
+                  @change="${(e) => { this.formData.duration = e.target.value; }}">
               </div>
             </div>
             <div class="form-group">
-              <label>${this._t('notes')}</label>
-              <textarea class="form-textarea" placeholder="${this._t('anyObservations')}" data-field="notes"></textarea>
+              <label>Notes</label>
+              <textarea class="form-textarea" placeholder="Any observations..."
+                @change="${(e) => { this.formData.notes = e.target.value; }}"></textarea>
             </div>
-            <button class="btn btn-success" data-action="addCryLog">${this._t('saveEntry')}</button>
+            <button class="btn btn-success" @click="${() => this.addCryLog()}">Save Entry</button>
           </div>
         ` : ""}
 
         <div class="log-list">
-          ${entries.length === 0 ? `<p class="empty-state">${this._t('noCryLogs')}</p>` : entries.map(entry => `
+          ${entries.length === 0 ? `<p class="empty-state">No cry logs yet. Start tracking to build a pattern analysis.</p>` : entries.map(entry => `
             <div class="log-entry">
               <div class="entry-header">
                 <span class="entry-time">${new Date(entry.timestamp).toLocaleTimeString()}</span>
                 <span class="entry-category" data-category="${entry.category}">${entry.category}</span>
               </div>
               <div class="entry-details">
-                <span>${this._t('intensity')}: ${"â…".repeat(entry.intensity)}${"â†".repeat(5 - entry.intensity)}</span>
-                <span>${this._t('duration')}: ${entry.duration} min</span>
+                <span>Intensity: ${"★".repeat(entry.intensity)}${"☆".repeat(5 - entry.intensity)}</span>
+                <span>Duration: ${entry.duration} min</span>
               </div>
               ${entry.notes ? `<p class="entry-notes">${entry.notes}</p>` : ""}
-              <button class="btn btn-small btn-danger" data-action="deleteCryLog" data-id="${entry.id}">${this._t('delete')}</button>
+              <button class="btn btn-small btn-danger" @click="${() => this.deleteCryLog(entry.id)}">Delete</button>
             </div>
           `).join("")}
         </div>
@@ -367,26 +269,26 @@ class HaCryAnalyzer extends HTMLElement {
     const analysis = this.analyzePatterns();
     return `
       <div class="tab-content">
-        <h3>${this._t('patternAnalysis')}</h3>
+        <h3>Pattern Analysis</h3>
 
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value">${analysis.totalCries}</div>
-            <div class="stat-label">${this._t('totalCries')}</div>
+            <div class="stat-label">Total Cries</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">${analysis.avgDuration}</div>
-            <div class="stat-label">${this._t('avgDuration')}</div>
+            <div class="stat-label">Avg Duration (min)</div>
           </div>
         </div>
 
         <div class="chart-section">
-          <h4>${this._t('criesByHour')}</h4>
+          <h4>Cries by Hour of Day</h4>
           ${this.renderHourlyChart()}
         </div>
 
         <div class="chart-section">
-          <h4>${this._t('cryCategories')}</h4>
+          <h4>Cry Categories</h4>
           ${this.renderPieChart()}
         </div>
       </div>
@@ -397,7 +299,7 @@ class HaCryAnalyzer extends HTMLElement {
     const tips = this.generateTips();
     return `
       <div class="tab-content">
-        <h3>${this._t('insightsTips')}</h3>
+        <h3>Insights & Tips</h3>
         <div class="tips-container">
           ${tips.map(tip => `<div class="tip-card">${tip}</div>`).join("")}
         </div>
@@ -408,6 +310,369 @@ class HaCryAnalyzer extends HTMLElement {
   render() {
     this.shadowRoot.innerHTML = `
       <style>
+        :host {
+          --primary-color: #FFB6C1;
+          --secondary-color: #87CEEB;
+          --bg-color: var(--ha-card-background, #fff);
+          --text-color: var(--ha-primary-text-color, #212121);
+          --border-color: var(--ha-border-color, #e0e0e0);
+        }
+
+        .card {
+          background: var(--bg-color);
+          color: var(--text-color);
+          border-radius: 12px;
+          padding: 16px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+          font-size: 20px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          color: var(--text-color);
+        }
+
+        .tabs {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 16px;
+          border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-button {
+          padding: 12px 16px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--text-color);
+          font-weight: 500;
+          border-bottom: 3px solid transparent;
+          transition: all 0.3s;
+        }
+
+        .tab-button.active {
+          color: var(--primary-color);
+          border-bottom-color: var(--primary-color);
+        }
+
+        .tab-button:hover {
+          opacity: 0.8;
+        }
+
+        .tab-content {
+          animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .log-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+
+        .form-card {
+          background: rgba(255, 182, 193, 0.1);
+          padding: 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+          border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+          margin-bottom: 12px;
+        }
+
+        .form-group label {
+          display: block;
+          font-weight: 500;
+          margin-bottom: 6px;
+          font-size: 14px;
+        }
+
+        .form-select, .form-input, .form-range, .form-textarea {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          background: var(--bg-color);
+          color: var(--text-color);
+          font-family: inherit;
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .intensity-display {
+          display: inline-block;
+          margin-left: 8px;
+          font-weight: 600;
+          color: var(--primary-color);
+        }
+
+        .form-textarea {
+          resize: vertical;
+          min-height: 80px;
+        }
+
+        .btn {
+          padding: 10px 16px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .btn-primary {
+          background: var(--primary-color);
+          color: white;
+        }
+
+        .btn-primary:hover {
+          opacity: 0.9;
+          box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+        }
+
+        .btn-success {
+          background: #90EE90;
+          color: white;
+        }
+
+        .btn-danger {
+          background: #FFB6B6;
+          color: white;
+        }
+
+        .btn-small {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+
+        .log-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .log-entry {
+          background: rgba(255, 182, 193, 0.05);
+          padding: 12px;
+          border-radius: 8px;
+          border-left: 4px solid var(--primary-color);
+        }
+
+        .entry-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .entry-time {
+          font-size: 12px;
+          color: var(--secondary-color);
+          font-weight: 600;
+        }
+
+        .entry-category {
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+          background: var(--primary-color);
+          color: white;
+        }
+
+        .entry-category[data-category="tired"] {
+          background: var(--secondary-color);
+        }
+
+        .entry-category[data-category="pain"] {
+          background: #FFB6B6;
+        }
+
+        .entry-category[data-category="discomfort"] {
+          background: #F0E68C;
+        }
+
+        .entry-category[data-category="bored"] {
+          background: #DDA0DD;
+        }
+
+        .entry-details {
+          display: flex;
+          gap: 16px;
+          font-size: 13px;
+          margin-bottom: 8px;
+        }
+
+        .entry-notes {
+          font-size: 13px;
+          font-style: italic;
+          margin: 8px 0;
+          padding: 8px;
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 4px;
+        }
+
+        .empty-state {
+          text-align: center;
+          color: var(--border-color);
+          padding: 32px 16px;
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+
+        .stat-card {
+          background: linear-gradient(135deg, rgba(255, 182, 193, 0.2), rgba(135, 206, 235, 0.2));
+          padding: 16px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--primary-color);
+        }
+
+        .stat-label {
+          font-size: 12px;
+          margin-top: 4px;
+          color: var(--text-color);
+          opacity: 0.7;
+        }
+
+        .chart-section {
+          margin-bottom: 24px;
+        }
+
+        .chart-section h4 {
+          margin-bottom: 12px;
+        }
+
+        .hourly-chart {
+          display: flex;
+          align-items: flex-end;
+          gap: 2px;
+          height: 120px;
+          padding: 12px;
+          background: rgba(255, 182, 193, 0.05);
+          border-radius: 8px;
+          overflow-x: auto;
+        }
+
+        .chart-bar-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex: 1;
+          min-width: 30px;
+        }
+
+        .chart-bar {
+          width: 100%;
+          background: linear-gradient(180deg, var(--primary-color), rgba(255, 182, 193, 0.5));
+          border-radius: 4px 4px 0 0;
+          transition: all 0.2s;
+          min-height: 4px;
+        }
+
+        .chart-bar:hover {
+          opacity: 0.8;
+        }
+
+        .chart-label {
+          font-size: 10px;
+          margin-top: 4px;
+          transform: rotate(45deg);
+          transform-origin: left;
+          width: 100%;
+          text-align: center;
+        }
+
+        .pie-container {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 16px;
+        }
+
+        .pie {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          position: relative;
+          background: conic-gradient(#FFB6C1 0deg 90deg, #87CEEB 90deg 180deg, #FFB6B6 180deg 270deg, #DDA0DD 270deg 360deg);
+        }
+
+        .pie-legend {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+        }
+
+        .legend-color {
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+        }
+
+        .tips-container {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .tip-card {
+          background: linear-gradient(135deg, rgba(255, 182, 193, 0.15), rgba(135, 206, 235, 0.15));
+          padding: 16px;
+          border-radius: 8px;
+          border-left: 4px solid var(--secondary-color);
+          line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+          .form-row {
+            grid-template-columns: 1fr;
+          }
+
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .log-header {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .btn {
+            width: 100%;
+          }
+        }
+      
+/* === Modern Bento Light Mode === */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -704,11 +969,11 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
 
         <div class="tabs">
           <button class="tab-button ${this.currentTab === "log" ? "active" : ""}"
-            data-action="switchTab" data-tab="log">${this._t('log')}</button>
+            @click="${() => { this.currentTab = "log"; this.render(); }}">Log</button>
           <button class="tab-button ${this.currentTab === "analysis" ? "active" : ""}"
-            data-action="switchTab" data-tab="analysis">${this._t('analysis')}</button>
+            @click="${() => { this.currentTab = "analysis"; this.render(); }}">Analysis</button>
           <button class="tab-button ${this.currentTab === "insights" ? "active" : ""}"
-            data-action="switchTab" data-tab="insights">${this._t('insights')}</button>
+            @click="${() => { this.currentTab = "insights"; this.render(); }}">Insights</button>
         </div>
 
         ${this.currentTab === "log" ? this.renderLogTab() : ""}
@@ -716,7 +981,7 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
         ${this.currentTab === "insights" ? this.renderInsightsTab() : ""}
 
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center;">
-          <button class="btn btn-primary" data-action="exportToJSON">${this._t('exportJson')}</button>
+          <button class="btn btn-primary" @click="${() => this.exportToJSON()}">Export to JSON</button>
         </div>
       </div>
     `;
@@ -725,31 +990,65 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
   }
 
   attachEventListeners() {
-    this.shadowRoot.querySelectorAll('[data-action="switchTab"]').forEach(btn => {
-      btn.addEventListener('click', () => { this.currentTab = btn.dataset.tab; this.render(); });
-    });
-    this.shadowRoot.querySelectorAll('[data-action="toggleAddForm"]').forEach(btn => {
-      btn.addEventListener('click', () => { this.showAddForm = !this.showAddForm; this.render(); });
-    });
-    this.shadowRoot.querySelectorAll('[data-action="addCryLog"]').forEach(btn => {
-      btn.addEventListener('click', () => this.addCryLog());
-    });
-    this.shadowRoot.querySelectorAll('[data-action="deleteCryLog"]').forEach(btn => {
-      btn.addEventListener('click', () => this.deleteCryLog(parseInt(btn.dataset.id)));
-    });
-    this.shadowRoot.querySelectorAll('[data-action="exportToJSON"]').forEach(btn => {
-      btn.addEventListener('click', () => this.exportToJSON());
+    const buttons = this.shadowRoot.querySelectorAll("button[\\@click]");
+    buttons.forEach(button => {
+      const clickHandler = button.getAttribute("@click");
+      if (clickHandler) {
+        button.removeAttribute("@click");
+        const match = clickHandler.match(/\(\)\s*=>\s*{\s*(.*?)\s*}/);
+        if (match) {
+          const code = match[1];
+          button.addEventListener("click", () => {
+            eval(code);
+          });
+        }
+      }
     });
 
-    // Handle form field changes
-    this.shadowRoot.querySelectorAll('[data-field]').forEach(field => {
-      field.addEventListener('change', (e) => {
-        const fieldName = field.dataset.field;
-        this.formData[fieldName] = e.target.value;
-        if (fieldName === 'intensity') {
+    // Handle form inputs
+    const selects = this.shadowRoot.querySelectorAll("select");
+    selects.forEach(select => {
+      const changeHandler = select.getAttribute("@change");
+      if (changeHandler) {
+        select.removeAttribute("@change");
+        select.addEventListener("change", (e) => {
+          this.formData.category = e.target.value;
+        });
+      }
+    });
+
+    const ranges = this.shadowRoot.querySelectorAll("input[type='range']");
+    ranges.forEach(range => {
+      const changeHandler = range.getAttribute("@change");
+      if (changeHandler) {
+        range.removeAttribute("@change");
+        range.addEventListener("change", (e) => {
+          this.formData.intensity = e.target.value;
           this.render();
-        }
-      });
+        });
+      }
+    });
+
+    const numberInputs = this.shadowRoot.querySelectorAll("input[type='number']");
+    numberInputs.forEach(input => {
+      const changeHandler = input.getAttribute("@change");
+      if (changeHandler) {
+        input.removeAttribute("@change");
+        input.addEventListener("change", (e) => {
+          this.formData.duration = e.target.value;
+        });
+      }
+    });
+
+    const textareas = this.shadowRoot.querySelectorAll("textarea");
+    textareas.forEach(textarea => {
+      const changeHandler = textarea.getAttribute("@change");
+      if (changeHandler) {
+        textarea.removeAttribute("@change");
+        textarea.addEventListener("change", (e) => {
+          this.formData.notes = e.target.value;
+        });
+      }
     });
   }
 
@@ -767,14 +1066,3 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
 }
 
 customElements.define("ha-cry-analyzer", HaCryAnalyzer);
-
-// Auto-load HA Tools Panel (if not already registered)
-if (!customElements.get('ha-tools-panel')) {
-  const _currentScript = document.currentScript?.src || '';
-  const _baseUrl = _currentScript.substring(0, _currentScript.lastIndexOf('/') + 1);
-  if (_baseUrl) {
-    const _s = document.createElement('script');
-    _s.src = _baseUrl + 'ha-tools-panel.js';
-    document.head.appendChild(_s);
-  }
-}
