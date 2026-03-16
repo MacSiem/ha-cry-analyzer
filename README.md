@@ -1,3 +1,34 @@
-# HA Cry Analyzer\n\nAnalyze baby cry patterns using audio classification. Identifies hunger, discomfort, tiredness, and other cry types with historical pattern tracking.\n\n## Installation\n\n### HACS (recommended)\n\n1. Open HACS in Home Assistant\n2. Go to **Frontend** section\n3. Click **â®** (three dots) > **Custom repositories**\n4. Add `https://github.com/MacSiem/ha-cry-analyzer` as **Dashboard** (or **Plugin**)\n5. Install **HA Cry Analyzer**\n6. Restart Home Assistant\n\n### Manual\n\nCopy the contents to `/config/www/community/ha-cry-analyzer/`\n\n## Design\n\nUses **Modern Bento Light Mode** design system:\n- Background: `#F8FAFC`\n- Primary: `#3B82F6`\n- Text: `#1E293B`\n- Border: `#E2E8F0`\n- Font: Inter, 16px border-radius, smooth animations\n\n## License\n\nMIT\n
+# HA Cry Analyzer
 
-![Cry Analyzer Screenshot](screenshot.png)
+![HA Cry Analyzer Screenshot](screenshot.png)
+
+Analyze baby cry patterns using audio classification. Identifies hunger, discomfort, and tiredness.
+
+## Installation
+
+### HACS (recommended)
+
+1. Open HACS in Home Assistant
+2. Go to **Frontend** section
+3. Click the three dots menu > **Custom repositories**
+4. Add `https://github.com/MacSiem/ha-cry-analyzer` as **Dashboard**
+5. Install **HA Cry Analyzer**
+6. Restart Home Assistant
+
+### Manual
+
+Copy the contents to `/config/www/community/ha-cry-analyzer/`
+
+## Design
+
+Uses **Modern Bento Light Mode** design system:
+
+- Background: `#F8FAFC`
+- Primary: `#3B82F6`
+- Text: `#1E293B`
+- Border: `#E2E8F0`
+- Font: Inter, 16px border-radius, smooth animations
+
+## License
+
+MIT
