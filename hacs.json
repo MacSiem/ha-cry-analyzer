@@ -1,5 +1,5 @@
 {
-  "name": "Cry Analyzer",
-  "render_readme": true,
-  "content_in_root": true
+    "name":  "Cry Analyzer",
+    "filename":  "ha-cry-analyzer.js",
+    "render_readme":  true
 }
