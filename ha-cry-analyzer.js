@@ -48,6 +48,7 @@ class HaCryAnalyzer extends HTMLElement {
     this._currentPage = {};
     this._pageSize = 15;
     this.cryLog = [];
+    this._loadData();
     this.currentTab = "log";
     this.showAddForm = false;
     this.formData = {
@@ -57,6 +58,19 @@ class HaCryAnalyzer extends HTMLElement {
       notes: ""
     };
     this.hasUpdated = false;
+  }
+
+  // --- localStorage persistence ---
+  _storageKey() { return 'ha-cry-analyzer-data'; }
+  _saveData() {
+    try { localStorage.setItem(this._storageKey(), JSON.stringify(this.cryLog)); }
+    catch (e) { console.warn('Cry Analyzer: save failed', e); }
+  }
+  _loadData() {
+    try {
+      const raw = localStorage.getItem(this._storageKey());
+      if (raw) this.cryLog = JSON.parse(raw);
+    } catch (e) { console.warn('Cry Analyzer: load failed', e); }
   }
 
   getCategories() {
@@ -74,6 +88,7 @@ class HaCryAnalyzer extends HTMLElement {
       notes: this.formData.notes
     };
     this.cryLog.push(entry);
+    this._saveData();
     this.formData = { category: "unknown", intensity: 3, duration: 5, notes: "" };
     this.showAddForm = false;
     this.render();
@@ -81,6 +96,7 @@ class HaCryAnalyzer extends HTMLElement {
 
   deleteCryLog(id) {
     this.cryLog = this.cryLog.filter(entry => entry.id !== id);
+    this._saveData();
     this.render();
   }
 
