@@ -228,21 +228,24 @@ class HaCryAnalyzer extends HTMLElement {
       unknown: "#D3D3D3"
     };
 
-    let slices = "";
+    // Build conic-gradient from data
+    let gradientParts = [];
     let currentAngle = 0;
     analysis.topCategories.forEach(([category, count]) => {
       const percentage = count / total;
       const angle = percentage * 360;
       const color = colors[category] || "#ccc";
-      slices += `<div class="pie-slice" style="--angle: ${currentAngle}deg; --slice-angle: ${angle}deg; background: ${color};" title="${category}: ${count}"></div>`;
+      gradientParts.push(color + ' ' + currentAngle.toFixed(1) + 'deg ' + (currentAngle + angle).toFixed(1) + 'deg');
       currentAngle += angle;
     });
+    const gradient = gradientParts.length > 0 ? 'conic-gradient(' + gradientParts.join(', ') + ')' : 'var(--bento-border)';
 
-    const legend = analysis.topCategories.map(([cat, count]) =>
-      `<div class="legend-item"><span class="legend-color" style="background: ${colors[cat]}"></span>${cat}: ${count}</div>`
-    ).join("");
+    const legend = analysis.topCategories.map(([cat, count]) => {
+      const pct = ((count / total) * 100).toFixed(1);
+      return '<div class="legend-item"><span class="legend-color" style="background: ' + colors[cat] + '"></span>' + cat + ': ' + count + ' (' + pct + '%)</div>';
+    }).join("");
 
-    return `<div class="pie-container"><div class="pie">${slices}</div></div><div class="pie-legend">${legend}</div>`;
+    return '<div class="pie-container"><div class="pie" style="background: ' + gradient + '"></div></div><div class="pie-legend">' + legend + '</div>';
   }
 
   renderLogTab() {
@@ -869,11 +872,11 @@ canvas {
         }
 
         .pie {
-          width: 120px;
-          height: 120px;
+          width: 150px;
+          height: 150px;
           border-radius: 50%;
           position: relative;
-          background: conic-gradient(#FFB6C1 0deg 90deg, #87CEEB 90deg 180deg, #FFB6B6 180deg 270deg, #DDA0DD 270deg 360deg);
+          /* dynamic conic-gradient via inline style */
         }
 
         .pie-legend {
