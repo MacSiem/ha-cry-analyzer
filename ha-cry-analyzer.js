@@ -1,5 +1,11 @@
+/* HA Cry Analyzer v3.1.2 — local deterministic pattern analysis */
+const escapeHtml = (value) => String(value == null ? '' : value).replace(
+  /[&<>"']/g,
+  character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character],
+);
+
 class HaCryAnalyzer extends HTMLElement {
-  setConfig(config) {
+  setConfig(config = {}) {
     this.config = config;
     this.title = config.title || "Baby Cry Analyzer";
     this.soundSensor = config.sound_sensor;
@@ -18,11 +24,13 @@ class HaCryAnalyzer extends HTMLElement {
     if (now - (this._lastRenderTime || 0) < 10000) {
       if (!this._renderScheduled) {
         this._renderScheduled = true;
-        setTimeout(() => {
+        const remaining = Math.max(0, 10000 - (now - (this._lastRenderTime || 0)));
+        this._renderTimer = setTimeout(() => {
           this._renderScheduled = false;
+          this._renderTimer = null;
           this.render();
           this._lastRenderTime = Date.now();
-        }, 5000 - (now - (this._lastRenderTime || 0)));
+        }, remaining);
       }
       return;
     }
@@ -37,12 +45,19 @@ class HaCryAnalyzer extends HTMLElement {
     }
   }
 
+  disconnectedCallback() {
+    if (this._renderTimer) clearTimeout(this._renderTimer);
+    this._renderTimer = null;
+    this._renderScheduled = false;
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     // --- Throttle fields ---
     this._lastRenderTime = 0;
     this._renderScheduled = false;
+    this._renderTimer = null;
     this._firstHassRender = false;
     // --- Pagination ---
     this._currentPage = {};
@@ -69,8 +84,32 @@ class HaCryAnalyzer extends HTMLElement {
   _loadData() {
     try {
       const raw = localStorage.getItem(this._storageKey());
-      if (raw) this.cryLog = JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        this.cryLog = Array.isArray(parsed)
+          ? parsed.map(entry => this._normaliseEntry(entry)).filter(Boolean)
+          : [];
+      }
     } catch (e) { console.warn('Cry Analyzer: load failed', e); }
+  }
+
+  _normaliseEntry(entry) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+    const categories = this.getCategories();
+    const category = categories.includes(entry.category) ? entry.category : 'unknown';
+    const intensity = Math.min(5, Math.max(1, Number.parseInt(entry.intensity, 10) || 1));
+    const duration = Math.min(60, Math.max(1, Number.parseInt(entry.duration, 10) || 1));
+    const timestamp = Number.isNaN(Date.parse(entry.timestamp))
+      ? new Date().toISOString()
+      : new Date(entry.timestamp).toISOString();
+    return {
+      id: Number.isFinite(Number(entry.id)) ? Number(entry.id) : Date.now(),
+      timestamp,
+      category,
+      intensity,
+      duration,
+      notes: String(entry.notes == null ? '' : entry.notes),
+    };
   }
 
   getCategories() {
@@ -83,11 +122,11 @@ class HaCryAnalyzer extends HTMLElement {
       id: Date.now(),
       timestamp: now.toISOString(),
       category: this.formData.category,
-      intensity: parseInt(this.formData.intensity),
-      duration: parseInt(this.formData.duration),
+      intensity: parseInt(this.formData.intensity, 10),
+      duration: parseInt(this.formData.duration, 10),
       notes: this.formData.notes
     };
-    this.cryLog.push(entry);
+    this.cryLog.push(this._normaliseEntry(entry));
     this._saveData();
     this.formData = { category: "unknown", intensity: 3, duration: 5, notes: "" };
     this.showAddForm = false;
@@ -127,7 +166,10 @@ class HaCryAnalyzer extends HTMLElement {
     const categoryCount = {};
     this.getCategories().forEach(cat => categoryCount[cat] = 0);
     this.cryLog.forEach(entry => {
-      categoryCount[entry.category]++;
+      const category = Object.prototype.hasOwnProperty.call(categoryCount, entry.category)
+        ? entry.category
+        : 'unknown';
+      categoryCount[category]++;
     });
     const topCategories = Object.entries(categoryCount)
       .sort((a, b) => b[1] - a[1])
@@ -242,7 +284,7 @@ class HaCryAnalyzer extends HTMLElement {
 
     const legend = analysis.topCategories.map(([cat, count]) => {
       const pct = ((count / total) * 100).toFixed(1);
-      return '<div class="legend-item"><span class="legend-color" style="background: ' + colors[cat] + '"></span>' + cat + ': ' + count + ' (' + pct + '%)</div>';
+      return '<div class="legend-item"><span class="legend-color" style="background: ' + colors[cat] + '"></span>' + escapeHtml(cat) + ': ' + count + ' (' + pct + '%)</div>';
     }).join("");
 
     return '<div class="pie-container"><div class="pie" style="background: ' + gradient + '"></div></div><div class="pie-legend">' + legend + '</div>';
@@ -255,7 +297,7 @@ class HaCryAnalyzer extends HTMLElement {
       <div class="tab-content">
         <div class="log-header">
           <h3>Cry Episodes (${this.cryLog.length})</h3>
-          <button class="btn btn-primary" @click="${() => { this.showAddForm = !this.showAddForm; this.render(); }}">
+          <button class="btn btn-primary" data-action="toggle-form">
             ${this.showAddForm ? "Cancel" : "+ Log Cry"}
           </button>
         </div>
@@ -265,7 +307,7 @@ class HaCryAnalyzer extends HTMLElement {
             <h4>Log a Cry Episode</h4>
             <div class="form-group">
               <label>Category</label>
-              <select class="form-select" @change="${(e) => { this.formData.category = e.target.value; }}">
+              <select class="form-select" data-field="category">
                 ${this.getCategories().map(cat =>
                   `<option value="${cat}" ${this.formData.category === cat ? "selected" : ""}>${cat}</option>`
                 ).join("")}
@@ -275,23 +317,20 @@ class HaCryAnalyzer extends HTMLElement {
               <div class="form-group">
                 <label>Intensity (1-5)</label>
                 <input type="range" min="1" max="5" class="form-range"
-                  value="${this.formData.intensity}"
-                  @change="${(e) => { this.formData.intensity = e.target.value; this.render(); }}">
+                  value="${this.formData.intensity}" data-field="intensity">
                 <span class="intensity-display">${this.formData.intensity}</span>
               </div>
               <div class="form-group">
                 <label>Duration (min)</label>
                 <input type="number" min="1" max="60" class="form-input"
-                  value="${this.formData.duration}"
-                  @change="${(e) => { this.formData.duration = e.target.value; }}">
+                  value="${this.formData.duration}" data-field="duration">
               </div>
             </div>
             <div class="form-group">
               <label>Notes</label>
-              <textarea class="form-textarea" placeholder="Any observations..."
-                @change="${(e) => { this.formData.notes = e.target.value; }}"></textarea>
+              <textarea class="form-textarea" placeholder="Any observations..." data-field="notes">${escapeHtml(this.formData.notes)}</textarea>
             </div>
-            <button class="btn btn-success" @click="${() => this.addCryLog()}">Save Entry</button>
+            <button class="btn btn-success" data-action="save-entry">Save Entry</button>
           </div>
         ` : ""}
 
@@ -299,15 +338,15 @@ class HaCryAnalyzer extends HTMLElement {
           ${entries.length === 0 ? `<p class="empty-state">No cry logs yet. Start tracking to build a pattern analysis.</p>` : entries.map(entry => `
             <div class="log-entry">
               <div class="entry-header">
-                <span class="entry-time">${new Date(entry.timestamp).toLocaleTimeString()}</span>
-                <span class="entry-category" data-category="${entry.category}">${entry.category}</span>
+                <span class="entry-time">${escapeHtml(new Date(entry.timestamp).toLocaleTimeString())}</span>
+                <span class="entry-category" data-category="${escapeHtml(entry.category)}">${escapeHtml(entry.category)}</span>
               </div>
               <div class="entry-details">
                 <span>Intensity: ${"★".repeat(entry.intensity)}${"☆".repeat(5 - entry.intensity)}</span>
                 <span>Duration: ${entry.duration} min</span>
               </div>
-              ${entry.notes ? `<p class="entry-notes">${entry.notes}</p>` : ""}
-              <button class="btn btn-small btn-danger" @click="${() => this.deleteCryLog(entry.id)}">Delete</button>
+              ${entry.notes ? `<p class="entry-notes">${escapeHtml(entry.notes)}</p>` : ""}
+              <button class="btn btn-small btn-danger" data-action="delete-entry" data-entry-id="${entry.id}">Delete</button>
             </div>
           `).join("")}
         </div>
@@ -1241,15 +1280,12 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
 </style>
 
       <div class="card">
-        <div class="card-title">${this.title}</div>
+        <div class="card-title">${escapeHtml(this.title)}</div>
 
         <div class="tabs">
-          <button class="tab-button ${this.currentTab === "log" ? "active" : ""}"
-            @click="${() => { this.currentTab = "log"; this.render(); }}">Log</button>
-          <button class="tab-button ${this.currentTab === "analysis" ? "active" : ""}"
-            @click="${() => { this.currentTab = "analysis"; this.render(); }}">Analysis</button>
-          <button class="tab-button ${this.currentTab === "insights" ? "active" : ""}"
-            @click="${() => { this.currentTab = "insights"; this.render(); }}">Insights</button>
+          <button class="tab-button ${this.currentTab === "log" ? "active" : ""}" data-action="tab" data-tab="log">Log</button>
+          <button class="tab-button ${this.currentTab === "analysis" ? "active" : ""}" data-action="tab" data-tab="analysis">Analysis</button>
+          <button class="tab-button ${this.currentTab === "insights" ? "active" : ""}" data-action="tab" data-tab="insights">Insights</button>
         </div>
 
         ${this.currentTab === "log" ? this.renderLogTab() : ""}
@@ -1257,7 +1293,7 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
         ${this.currentTab === "insights" ? this.renderInsightsTab() : ""}
 
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center;">
-          <button class="btn btn-primary" @click="${() => this.exportToJSON()}">Export to JSON</button>
+          <button class="btn btn-primary" data-action="export">Export to JSON</button>
         </div>
       </div>
     `;
@@ -1266,65 +1302,54 @@ canvas, .canvas-container canvas { width: 100%; height: 200px; border: 1px solid
   }
 
   attachEventListeners() {
-    const buttons = this.shadowRoot.querySelectorAll("button[\\@click]");
+    const buttons = this.shadowRoot.querySelectorAll("button[data-action]");
     buttons.forEach(button => {
-      const clickHandler = button.getAttribute("@click");
-      if (clickHandler) {
-        button.removeAttribute("@click");
-        const match = clickHandler.match(/\(\)\s*=>\s*{\s*(.*?)\s*}/);
-        if (match) {
-          const code = match[1];
-          button.addEventListener("click", () => {
-            eval(code);
-          });
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        if (action === 'toggle-form') {
+          this.showAddForm = !this.showAddForm;
+          this.render();
+        } else if (action === 'save-entry') {
+          this.addCryLog();
+        } else if (action === 'delete-entry') {
+          this.deleteCryLog(Number(button.dataset.entryId));
+        } else if (action === 'tab') {
+          this.currentTab = button.dataset.tab;
+          this.render();
+        } else if (action === 'export') {
+          this.exportToJSON();
         }
-      }
+      });
     });
 
     // Handle form inputs
-    const selects = this.shadowRoot.querySelectorAll("select");
+    const selects = this.shadowRoot.querySelectorAll("select[data-field='category']");
     selects.forEach(select => {
-      const changeHandler = select.getAttribute("@change");
-      if (changeHandler) {
-        select.removeAttribute("@change");
-        select.addEventListener("change", (e) => {
-          this.formData.category = e.target.value;
-        });
-      }
+      select.addEventListener("change", (e) => {
+        this.formData.category = this.getCategories().includes(e.target.value) ? e.target.value : 'unknown';
+      });
     });
 
     const ranges = this.shadowRoot.querySelectorAll("input[type='range']");
     ranges.forEach(range => {
-      const changeHandler = range.getAttribute("@change");
-      if (changeHandler) {
-        range.removeAttribute("@change");
-        range.addEventListener("change", (e) => {
-          this.formData.intensity = e.target.value;
-          this.render();
-        });
-      }
+      range.addEventListener("change", (e) => {
+        this.formData.intensity = e.target.value;
+        this.render();
+      });
     });
 
     const numberInputs = this.shadowRoot.querySelectorAll("input[type='number']");
     numberInputs.forEach(input => {
-      const changeHandler = input.getAttribute("@change");
-      if (changeHandler) {
-        input.removeAttribute("@change");
-        input.addEventListener("change", (e) => {
-          this.formData.duration = e.target.value;
-        });
-      }
+      input.addEventListener("change", (e) => {
+        this.formData.duration = e.target.value;
+      });
     });
 
     const textareas = this.shadowRoot.querySelectorAll("textarea");
     textareas.forEach(textarea => {
-      const changeHandler = textarea.getAttribute("@change");
-      if (changeHandler) {
-        textarea.removeAttribute("@change");
-        textarea.addEventListener("change", (e) => {
-          this.formData.notes = e.target.value;
-        });
-      }
+      textarea.addEventListener("change", (e) => {
+        this.formData.notes = e.target.value;
+      });
     });
   }
 

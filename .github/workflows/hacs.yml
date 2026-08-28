@@ -22,3 +22,7 @@ jobs:
         uses: hacs/action@main
         with:
           category: plugin
+      - name: Security regression
+        run: |
+          node --check ha-cry-analyzer.js
+          node tests/security-regression.test.cjs
